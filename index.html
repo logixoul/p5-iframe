@@ -176,6 +176,7 @@
             }
             if (data.type === "runtime-error") {
                 setStatus(`Error: ${data.message || "Unknown error"}`);
+                setMode("code");
             }
         });
     </script>
