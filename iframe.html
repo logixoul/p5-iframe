@@ -80,23 +80,6 @@
     </div>
 
     <script>
-        const defaultCode = [
-            "function setup() {",
-            "  createCanvas(windowWidth, windowHeight);",
-            "  noStroke();",
-            "}",
-            "",
-            "function draw() {",
-            "  background(244, 242, 234);",
-            "  fill(198, 81, 2);",
-            "  circle(width * 0.5 + sin(frameCount * 0.03) * 140, height * 0.5, 80);",
-            "}",
-            "",
-            "function windowResized() {",
-            "  resizeCanvas(windowWidth, windowHeight);",
-            "}"
-        ].join("\n");
-
         const editor = document.getElementById("codeEditor");
         const runBtn = document.getElementById("runBtn");
         const statusEl = document.getElementById("status");
@@ -114,8 +97,46 @@
             frame.contentWindow.postMessage({ type: "run-sketch", code: editor.value }, "*");
         }
 
-        editor.value = defaultCode;
+        function waitForRunnerLoad() {
+            if (frame.contentDocument && frame.contentDocument.readyState === "complete") {
+                return Promise.resolve();
+            }
+            return new Promise((resolve) => {
+                frame.addEventListener("load", () => resolve(), { once: true });
+            });
+        }
+
         runBtn.addEventListener("click", runCurrentCode);
+
+        async function loadSketchFromQuery() {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get("id");
+
+            if (!id) {
+                setStatus("Error: missing sketch id");
+                return;
+            }
+
+            if (!/^[A-Za-z0-9_-]+$/.test(id)) {
+                setStatus("Error: invalid sketch id");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${id}.js`);
+                if (!response.ok) {
+                    throw new Error(`Failed to load ${id}.js`);
+                }
+
+                editor.value = await response.text();
+                await waitForRunnerLoad();
+                runCurrentCode();
+            } catch (error) {
+                setStatus(`Error: ${error.message || "Unable to load sketch"}`);
+            }
+        }
+
+        loadSketchFromQuery();
 
         window.addEventListener("message", (event) => {
             const data = event.data;
