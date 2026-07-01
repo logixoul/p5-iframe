@@ -16,17 +16,15 @@
         }
 
         .app {
-            display: grid;
-            grid-template-columns: 40% 60%;
             height: 100%;
         }
 
         .editor-pane, .preview-pane {
             min-height: 0;
+            height: 100%;
         }
 
         .editor-pane {
-            border-right: 1px solid #ccc;
             display: grid;
             grid-template-rows: auto 1fr;
         }
@@ -63,6 +61,17 @@
             border: 0;
             display: block;
         }
+
+        .preview-pane {
+            position: relative;
+        }
+
+        #codeToggleBtn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
@@ -75,7 +84,13 @@
             <textarea id="codeEditor" spellcheck="false"></textarea>
         </section>
         <section class="preview-pane">
-            <iframe id="runnerFrame" src="inner-iframe.html" title="Sketch preview"></iframe>
+            <button id="codeToggleBtn" type="button">Code</button>
+            <iframe
+                id="runnerFrame"
+                src="inner-iframe.html"
+                title="Sketch preview"
+                allow="accelerometer; gyroscope; magnetometer"
+            ></iframe>
         </section>
     </div>
 
@@ -84,9 +99,22 @@
         const runBtn = document.getElementById("runBtn");
         const statusEl = document.getElementById("status");
         const frame = document.getElementById("runnerFrame");
+        const codeToggleBtn = document.getElementById("codeToggleBtn");
+        const previewPane = document.querySelector(".preview-pane");
+        const editorPane = document.querySelector(".editor-pane");
 
         function setStatus(text) {
             statusEl.textContent = text;
+        }
+
+        function setMode(mode) {
+            if (mode === "preview") {
+                previewPane.style.display = "block";
+                editorPane.style.display = "none";
+            } else if (mode === "code") {
+                previewPane.style.display = "none";
+                editorPane.style.display = "grid";
+            }
         }
 
         function runCurrentCode() {
@@ -95,6 +123,7 @@
                 return;
             }
             frame.contentWindow.postMessage({ type: "run-sketch", code: editor.value }, "*");
+            setMode("preview");
         }
 
         function waitForRunnerLoad() {
@@ -107,15 +136,14 @@
         }
 
         runBtn.addEventListener("click", runCurrentCode);
+        codeToggleBtn.addEventListener("click", () => {
+            setMode("code");
+        });
+        setMode("preview");
 
         async function loadSketchFromQuery() {
             const params = new URLSearchParams(window.location.search);
             const id = params.get("id");
-
-            if (!id) {
-                setStatus("Error: missing sketch id");
-                return;
-            }
 
             if (!/^[A-Za-z0-9_-]+$/.test(id)) {
                 setStatus("Error: invalid sketch id");

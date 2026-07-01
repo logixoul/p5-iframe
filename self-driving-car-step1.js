@@ -38,7 +38,7 @@ function mousePressed() {
     startDir = destDir;
 
     noFill();
-    stroke("white");
+    stroke("red");
     beginShape();
     for (let coef = 0; coef < 1; coef += .01) {
         const pos = createVector(
@@ -47,4 +47,8 @@ function mousePressed() {
         vertex(pos.x, pos.y);
     }
     endShape();
+}
+
+function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
 }
