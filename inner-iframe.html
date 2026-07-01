@@ -61,8 +61,20 @@
 			parent.postMessage({ type: type, message: message }, "*");
 		}
 
+		const originalConsoleError = console.error;
+		console.error = function (...args) {
+			const message = args.length ? String(args[0]) : "Runtime error";
+			send("runtime-error", message);
+			originalConsoleError.apply(console, args);
+		};
+
 		window.addEventListener("error", function (event) {
 			send("runtime-error", event.message || "Runtime error");
+		});
+
+		window.addEventListener("unhandledrejection", function (event) {
+			const reason = event && event.reason ? event.reason : "Unhandled promise rejection";
+			send("runtime-error", String(reason.message || reason));
 		});
 	<\/script>
 	<script src="https://cdn.jsdelivr.net/npm/p5@2.3.0/lib/p5.min.js"><\/script>
@@ -100,6 +112,10 @@
 				window.addEventListener("message", (event) => {
 						const data = event.data;
 						if (!data || typeof data !== "object") {
+								return;
+						}
+						if (data.type === "runtime-ok" || data.type === "runtime-error") {
+								parent.postMessage(data, "*");
 								return;
 						}
 						if (data.type === "run-sketch") {
