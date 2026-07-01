@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Inner p5 Runtime</title>
+		<style>
+				html,
+				body {
+						margin: 0;
+						width: 100%;
+						height: 100%;
+						overflow: hidden;
+						background: #ffffff;
+				}
+
+				#runtimeRoot,
+				#runtimeFrame {
+						width: 100%;
+						height: 100%;
+						border: 0;
+						display: block;
+				}
+		</style>
+</head>
+<body>
+		<div id="runtimeRoot"></div>
+
+		<script>
+				const runtimeRoot = document.getElementById("runtimeRoot");
+				let runtimeFrame = null;
+
+				function buildRuntimeDoc(userCode) {
+						const codeString = JSON.stringify(String(userCode || ""));
+						return `<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<style>
+		html, body {
+			margin: 0;
+			width: 100%;
+			height: 100%;
+			overflow: hidden;
+			background: #ffffff;
+		}
+		main {
+			width: 100%;
+			height: 100%;
+		}
+		canvas {
+			display: block;
+		}
+	</style>
+</head>
+<body>
+	<main id="app"></main>
+	<script>
+		function send(type, message) {
+			parent.postMessage({ type: type, message: message }, "*");
+		}
+
+		window.addEventListener("error", function (event) {
+			send("runtime-error", event.message || "Runtime error");
+		});
+	<\/script>
+	<script src="https://cdn.jsdelivr.net/npm/p5@2.3.0/lib/p5.min.js"><\/script>
+	<script>
+		try {
+			const userCode = ${codeString};
+			const tag = document.createElement("script");
+			tag.type = "text/javascript";
+			tag.text = userCode;
+			document.body.appendChild(tag);
+			send("runtime-ok", "Sketch loaded");
+		} catch (error) {
+			send("runtime-error", error.message || String(error));
+		}
+	<\/script>
+</body>
+</html>`;
+				}
+
+				function hardResetAndRun(code) {
+						if (runtimeFrame) {
+								runtimeFrame.remove();
+								runtimeFrame = null;
+						}
+
+						const frame = document.createElement("iframe");
+						frame.id = "runtimeFrame";
+						frame.setAttribute("sandbox", "allow-scripts");
+						frame.setAttribute("title", "Runtime sandbox");
+						frame.srcdoc = buildRuntimeDoc(code);
+						runtimeRoot.appendChild(frame);
+						runtimeFrame = frame;
+				}
+
+				window.addEventListener("message", (event) => {
+						const data = event.data;
+						if (!data || typeof data !== "object") {
+								return;
+						}
+						if (data.type === "run-sketch") {
+								hardResetAndRun(data.code);
+						}
+				});
+		</script>
+</body>
+</html>
