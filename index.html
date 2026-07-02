@@ -35,12 +35,20 @@
             border-bottom: 1px solid #ccc;
             display: flex;
             gap: 8px;
-            align-items: center;
         }
 
-        button {
-            padding: 6px 10px;
-            cursor: pointer;
+        #code-toggle-btn {
+            background: none;
+            border: 0px solid transparent;
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+        }
+
+        #code-icon-img {
+            width: 32px;
+            height: 32px;
         }
 
         #status { min-height: 1em; }
@@ -62,23 +70,10 @@
             border: 0;
             display: block;
         }
-
-        .view-controls {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            z-index: 1000;
-        }
-
-        #codeToggleBtn {
-            min-width: 72px;
-        }
     </style>
 </head>
 <body>
-    <div class="view-controls">
-        <button id="codeToggleBtn" type="button">Code</button>
-    </div>
+    <button id="code-toggle-btn" type="button"><img id="code-icon-img" src="code-icon.png" alt="Toggle Code"></button>
     <div class="app">
         <section class="editor-pane">
             <div class="toolbar">
@@ -100,7 +95,8 @@
         const editor = document.getElementById("codeEditor");
         const statusEl = document.getElementById("status");
         const frame = document.getElementById("runnerFrame");
-        const codeToggleBtn = document.getElementById("codeToggleBtn");
+        const codeToggleBtn = document.getElementById("code-toggle-btn");
+        const codeIconImg = document.getElementById("code-icon-img");
         const previewPane = document.querySelector(".preview-pane");
         const editorPane = document.querySelector(".editor-pane");
         const runnerUrl = new URL("inner-iframe.html", window.location.href);
@@ -121,11 +117,11 @@
             if (mode === "preview") {
                 previewPane.style.display = "block";
                 editorPane.style.display = "none";
-                codeToggleBtn.textContent = "Code";
+                codeIconImg.src = "code-icon.png";
             } else if (mode === "code") {
                 previewPane.style.display = "none";
                 editorPane.style.display = "grid";
-                codeToggleBtn.textContent = "Preview";
+                codeIconImg.src = "preview-icon.png";
             }
         }
 
