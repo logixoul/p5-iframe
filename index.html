@@ -17,6 +17,7 @@
 
         .app {
             height: 100%;
+            position: relative;
         }
 
         .editor-pane, .preview-pane {
@@ -62,29 +63,30 @@
             display: block;
         }
 
-        .preview-pane {
-            position: relative;
-        }
-
-        #codeToggleBtn {
-            position: absolute;
+        .view-controls {
+            position: fixed;
             top: 10px;
             left: 10px;
             z-index: 1000;
         }
+
+        #codeToggleBtn {
+            min-width: 72px;
+        }
     </style>
 </head>
 <body>
+    <div class="view-controls">
+        <button id="codeToggleBtn" type="button">Code</button>
+    </div>
     <div class="app">
         <section class="editor-pane">
             <div class="toolbar">
-                <button id="runBtn" type="button">Run</button>
                 <span id="status"></span>
             </div>
             <textarea id="codeEditor" spellcheck="false"></textarea>
         </section>
         <section class="preview-pane">
-            <button id="codeToggleBtn" type="button">Code</button>
             <iframe
                 id="runnerFrame"
                 src="inner-iframe"
@@ -96,12 +98,12 @@
 
     <script>
         const editor = document.getElementById("codeEditor");
-        const runBtn = document.getElementById("runBtn");
         const statusEl = document.getElementById("status");
         const frame = document.getElementById("runnerFrame");
         const codeToggleBtn = document.getElementById("codeToggleBtn");
         const previewPane = document.querySelector(".preview-pane");
         const editorPane = document.querySelector(".editor-pane");
+        const runnerUrl = new URL("inner-iframe.html", window.location.href);
         let runnerReadyResolve = null;
         let runnerReadyPromise = createRunnerReadyPromise();
 
@@ -119,9 +121,11 @@
             if (mode === "preview") {
                 previewPane.style.display = "block";
                 editorPane.style.display = "none";
+                codeToggleBtn.textContent = "Code";
             } else if (mode === "code") {
                 previewPane.style.display = "none";
                 editorPane.style.display = "grid";
+                codeToggleBtn.textContent = "Preview";
             }
         }
 
@@ -134,12 +138,21 @@
             setMode("preview");
         }
 
-        frame.addEventListener("load", () => {
+        async function loadRunnerFrame() {
             runnerReadyPromise = createRunnerReadyPromise();
-        });
+            const response = await fetch(runnerUrl);
+            if (!response.ok) {
+                throw new Error("Failed to load runner frame");
+            }
+            frame.srcdoc = await response.text();
+            await runnerReadyPromise;
+        }
 
-        runBtn.addEventListener("click", runCurrentCode);
         codeToggleBtn.addEventListener("click", () => {
+            if (previewPane.style.display === "none") {
+                runCurrentCode();
+                return;
+            }
             setMode("code");
         });
         setMode("preview");
@@ -154,13 +167,15 @@
             }
 
             try {
-                const response = await fetch(`${id}.js`);
-                if (!response.ok) {
+                const [, sketchResponse] = await Promise.all([
+                    loadRunnerFrame(),
+                    fetch(`${id}.js`)
+                ]);
+                if (!sketchResponse.ok) {
                     throw new Error(`Failed to load ${id}.js`);
                 }
 
-                editor.value = await response.text();
-                await runnerReadyPromise;
+                editor.value = await sketchResponse.text();
                 runCurrentCode();
             } catch (error) {
                 setStatus(`Error: ${error.message || "Unable to load sketch"}`);
