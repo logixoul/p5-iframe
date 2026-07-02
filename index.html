@@ -15,13 +15,11 @@
             font-family: sans-serif;
         }
 
-        .app {
-            height: 100%;
+        body {
             position: relative;
         }
 
         .editor-pane, .preview-pane {
-            min-height: 0;
             height: 100%;
         }
 
@@ -74,22 +72,20 @@
 </head>
 <body>
     <button id="code-toggle-btn" type="button"><img id="code-icon-img" src="code-icon.png" alt="Toggle Code"></button>
-    <div class="app">
-        <section class="editor-pane">
-            <div class="toolbar">
-                <span id="status"></span>
-            </div>
-            <textarea id="codeEditor" spellcheck="false"></textarea>
-        </section>
-        <section class="preview-pane">
-            <iframe
-                id="runnerFrame"
-                src="inner-iframe"
-                title="Sketch preview"
-                allow="accelerometer; gyroscope; magnetometer"
-            ></iframe>
-        </section>
-    </div>
+    <section class="editor-pane">
+        <div class="toolbar">
+            <span id="status"></span>
+        </div>
+        <textarea id="codeEditor" spellcheck="false"></textarea>
+    </section>
+    <section class="preview-pane">
+        <iframe
+            id="runnerFrame"
+            src="inner-iframe"
+            title="Sketch preview"
+            allow="accelerometer; gyroscope; magnetometer"
+        ></iframe>
+    </section>
 
     <script>
         const editor = document.getElementById("codeEditor");
