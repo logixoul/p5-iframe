@@ -28,11 +28,11 @@
             grid-template-rows: auto 1fr;
         }
 
-        .toolbar {
+        #status {
             padding: 10px;
             border-bottom: 1px solid #ccc;
             display: flex;
-            gap: 8px;
+            min-height: 2em;
         }
 
         #code-toggle-btn {
@@ -48,8 +48,6 @@
             width: 32px;
             height: 32px;
         }
-
-        #status { min-height: 1em; }
 
         textarea {
             width: 100%;
@@ -73,9 +71,7 @@
 <body>
     <button id="code-toggle-btn" type="button"><img id="code-icon-img" src="code-icon.png" alt="Toggle Code"></button>
     <section class="editor-pane">
-        <div class="toolbar">
-            <span id="status"></span>
-        </div>
+        <div id="status"></div>
         <textarea id="codeEditor" spellcheck="false"></textarea>
     </section>
     <section class="preview-pane">
