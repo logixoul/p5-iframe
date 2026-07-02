@@ -121,6 +121,8 @@
 								hardResetAndRun(data.code);
 						}
 				});
+
+				parent.postMessage({ type: "runner-ready" }, "*");
 		</script>
 </body>
 </html>

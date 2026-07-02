@@ -102,6 +102,14 @@
         const codeToggleBtn = document.getElementById("codeToggleBtn");
         const previewPane = document.querySelector(".preview-pane");
         const editorPane = document.querySelector(".editor-pane");
+        let runnerReadyResolve = null;
+        let runnerReadyPromise = createRunnerReadyPromise();
+
+        function createRunnerReadyPromise() {
+            return new Promise((resolve) => {
+                runnerReadyResolve = resolve;
+            });
+        }
 
         function setStatus(text) {
             statusEl.textContent = text;
@@ -126,14 +134,9 @@
             setMode("preview");
         }
 
-        function waitForRunnerLoad() {
-            if (frame.contentDocument && frame.contentDocument.readyState === "complete") {
-                return Promise.resolve();
-            }
-            return new Promise((resolve) => {
-                frame.addEventListener("load", () => resolve(), { once: true });
-            });
-        }
+        frame.addEventListener("load", () => {
+            runnerReadyPromise = createRunnerReadyPromise();
+        });
 
         runBtn.addEventListener("click", runCurrentCode);
         codeToggleBtn.addEventListener("click", () => {
@@ -157,7 +160,7 @@
                 }
 
                 editor.value = await response.text();
-                await waitForRunnerLoad();
+                await runnerReadyPromise;
                 runCurrentCode();
             } catch (error) {
                 setStatus(`Error: ${error.message || "Unable to load sketch"}`);
@@ -169,6 +172,13 @@
         window.addEventListener("message", (event) => {
             const data = event.data;
             if (!data || typeof data !== "object") {
+                return;
+            }
+            if (data.type === "runner-ready") {
+                if (runnerReadyResolve) {
+                    runnerReadyResolve();
+                    runnerReadyResolve = null;
+                }
                 return;
             }
             if (data.type === "runtime-ok") {
